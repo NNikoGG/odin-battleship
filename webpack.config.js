@@ -15,6 +15,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Battleship',
+      template: path.resolve(__dirname, 'src', 'index.html'),
     }),
   ],
   module: {
