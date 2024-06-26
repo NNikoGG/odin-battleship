@@ -1,4 +1,3 @@
-// models/shipModel.js
 class Ship {
   constructor(length) {
     this.length = length;
