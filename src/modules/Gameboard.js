@@ -1,22 +1,47 @@
 const Gameboard = () => {
-  const BOARD_SIZE = 10;
-  const createBoard = () =>
-    Array.from({ length: BOARD_SIZE }, (_, y) =>
-      Array.from({ length: BOARD_SIZE }, (_, x) => ({
-        ship: null,
-        index: null,
-        isHit: false,
-        isTaken: false,
-        x,
-        y,
-      }))
+  const board = Array(10)
+    .fill()
+    .map((_, y) =>
+      Array(10)
+        .fill()
+        .map((_, x) => ({ x, y, isHit: false, ship: null, isTaken: false }))
     );
+  const missedAttacks = [];
 
-  let board = createBoard();
+  const isWithinBounds = (x, y) => x >= 0 && x < 10 && y >= 0 && y < 10;
 
-  const isWithinBounds = (x, y) =>
-    x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE;
-  const getTile = (x, y) => (isWithinBounds(x, y) ? board[y][x] : null);
+  const getTile = (x, y) => {
+    if (isWithinBounds(x, y)) {
+      return board[y][x];
+    }
+    return null;
+  };
+
+  const receiveAttack = ({ x, y }) => {
+    const tile = getTile(x, y);
+    console.log(`Attempting attack at (${x}, ${y}):`, tile); // Debug log
+
+    if (!tile) {
+      console.log('Invalid coordinates');
+      return false;
+    }
+
+    if (tile.isHit) {
+      console.log('Already hit');
+      return false;
+    }
+
+    tile.isHit = true;
+    if (tile.ship) {
+      console.log('Hit ship');
+      tile.ship.hit(tile.index);
+    } else {
+      console.log('Missed');
+      missedAttacks.push({ x, y });
+    }
+    return true;
+  };
+
   const isTileTaken = (x, y) => getTile(x, y)?.isTaken || false;
 
   const canPlaceShip = (ship, { x, y, direction }) => {
@@ -74,7 +99,11 @@ const Gameboard = () => {
     for (let i = 0; i < ship.length; i++) {
       const [x, y] = getCoordinates(i);
       const tile = getTile(x, y);
-      Object.assign(tile, { ship, index: i, isTaken: true });
+      if (tile) {
+        tile.ship = ship;
+        tile.index = i;
+        tile.isTaken = true;
+      }
     }
     markAdjacentTiles(ship, startX, startY, getCoordinates);
   };
@@ -91,46 +120,57 @@ const Gameboard = () => {
     }
   };
 
-  const receiveAttack = ({ x, y }) => {
-    const tile = getTile(x, y);
-    if (!tile || tile.isHit) return false;
-
-    tile.isHit = true;
-    if (tile.ship) tile.ship.hit(tile.index);
-    return true;
-  };
-
-  const clearBoard = () => {
-    board = createBoard();
-  };
-
   const placeShipsRandomly = ships => {
+    const maxAttempts = 1000;
+    let attempts = 0;
+
     const tryPlacement = () => {
       clearBoard();
       return ships.every(ship => {
-        const direction = Math.random() < 0.5 ? 'horizontal' : 'vertical';
-        const directionKey =
-          direction === 'horizontal' ? 'horizontally' : 'vertically';
-        const legalMoves = findLegalMoves(ship, direction);
-        if (legalMoves.length === 0) return false;
-
-        const { x, y } =
-          legalMoves[Math.floor(Math.random() * legalMoves.length)];
-        placeShip(ship, { x, y, [directionKey]: true });
-        return true;
+        let placed = false;
+        for (let i = 0; i < 100 && !placed; i++) {
+          const direction = Math.random() < 0.5 ? 'horizontal' : 'vertical';
+          const directionKey =
+            direction === 'horizontal' ? 'horizontally' : 'vertically';
+          const x = Math.floor(Math.random() * 10);
+          const y = Math.floor(Math.random() * 10);
+          try {
+            placeShip(ship, { x, y, [directionKey]: true });
+            placed = true;
+          } catch (error) {
+            // Placement failed, try again
+          }
+        }
+        return placed;
       });
     };
 
     while (!tryPlacement()) {
-      /* Keep trying until successful */
+      attempts++;
+      if (attempts >= maxAttempts) {
+        throw new Error('Unable to place ships after maximum attempts');
+      }
     }
   };
 
   const findLegalMoves = (ship, direction) =>
-    board.flat().filter(({ x, y }) => canPlaceShip(ship, { x, y, direction }));
+    board.flat().filter(tile => {
+      const { x, y } = tile;
+      return canPlaceShip(ship, { x, y, direction });
+    });
 
   const isAllShipsSunk = () =>
     board.flat().every(tile => !tile.ship || tile.ship.isSunk());
+
+  const clearBoard = () => {
+    for (let y = 0; y < 10; y++) {
+      for (let x = 0; x < 10; x++) {
+        board[y][x] = { isHit: false, ship: null, isTaken: false };
+      }
+    }
+  };
+
+  const getMissedAttacks = () => [...missedAttacks];
 
   return {
     get board() {
@@ -140,6 +180,7 @@ const Gameboard = () => {
     receiveAttack,
     placeShipsRandomly,
     isAllShipsSunk,
+    getMissedAttacks,
   };
 };
 
