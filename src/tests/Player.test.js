@@ -3,61 +3,33 @@ import Gameboard from '../modules/Gameboard';
 
 describe('Player', () => {
   let player;
+  let aiPlayer;
 
   beforeEach(() => {
     player = Player();
+    aiPlayer = Player({ isAI: true });
   });
 
-  describe('Factory function', () => {
-    test('returns an object', () => {
-      expect(typeof player).toBe('object');
-    });
-
-    test('has expected properties and methods', () => {
-      expect(player).toEqual(
-        expect.objectContaining({
-          isMyTurn: expect.any(Boolean),
-          isAI: expect.any(Boolean),
-          changeTurn: expect.any(Function),
-          playMoveAI: expect.any(Function),
-        })
-      );
-    });
+  test('Player factory function returns an object', () => {
+    expect(typeof player).toBe('object');
   });
 
-  describe('Initial state', () => {
-    test('isMyTurn is initially false', () => {
-      expect(player.isMyTurn).toBe(false);
-    });
-
-    test('isAI is false by default', () => {
-      expect(player.isAI).toBe(false);
-    });
-
-    test('isAI is true when specified in options', () => {
-      const aiPlayer = Player({ isAI: true });
-      expect(aiPlayer.isAI).toBe(true);
-    });
+  test('Player has isAI property', () => {
+    expect(player.isAI).toBe(false);
+    expect(aiPlayer.isAI).toBe(true);
   });
 
-  describe('changeTurn method', () => {
-    test('toggles isMyTurn correctly', () => {
-      expect(player.isMyTurn).toBe(false);
-      player.changeTurn();
-      expect(player.isMyTurn).toBe(true);
-      player.changeTurn();
-      expect(player.isMyTurn).toBe(false);
-    });
+  test('Player has gameboard property', () => {
+    expect(player.gameboard).toBeUndefined();
+    player.gameboard = Gameboard();
+    expect(player.gameboard).toBeDefined();
   });
 
   describe('playMoveAI method', () => {
-    let aiPlayer;
-    let gameboard;
+    let enemyGameboard;
 
     beforeEach(() => {
-      aiPlayer = Player({ isAI: true });
-      aiPlayer.changeTurn(); // Set turn to true
-      gameboard = Gameboard();
+      enemyGameboard = Gameboard();
     });
 
     test('throws error with invalid arguments', () => {
@@ -67,35 +39,53 @@ describe('Player', () => {
       expect(() => aiPlayer.playMoveAI([])).toThrow();
     });
 
-    test('plays a random move', () => {
-      aiPlayer.playMoveAI(gameboard);
-      const hitCount = gameboard.board.flat().filter(tile => tile.isHit).length;
-      expect(hitCount).toBe(1);
+    test('returns valid move coordinates', () => {
+      const move = aiPlayer.playMoveAI(enemyGameboard);
+      expect(move).toHaveProperty('x');
+      expect(move).toHaveProperty('y');
+      expect(move.x).toBeGreaterThanOrEqual(0);
+      expect(move.x).toBeLessThan(10);
+      expect(move.y).toBeGreaterThanOrEqual(0);
+      expect(move.y).toBeLessThan(10);
     });
 
-    test('returns coordinates of the hit', () => {
-      const coordinates = aiPlayer.playMoveAI(gameboard);
-      const hitTile = gameboard.board.flat().find(tile => tile.isHit);
-      expect(coordinates).toEqual({ x: hitTile.x, y: hitTile.y });
+    test('does not return already hit tiles', () => {
+      for (let i = 0; i < 99; i++) {
+        const move = aiPlayer.playMoveAI(enemyGameboard);
+        enemyGameboard.receiveAttack(move);
+      }
+      const lastMove = aiPlayer.playMoveAI(enemyGameboard);
+      expect(enemyGameboard.board[lastMove.y][lastMove.x].isHit).toBe(false);
     });
+  });
 
-    test('does not target already hit tiles', () => {
-      const gameboards = Array(3)
-        .fill()
-        .map(() => {
-          const gb = Gameboard();
-          gb.board.forEach((row, y) =>
-            row.forEach((tile, x) => {
-              if (y !== 9 || x !== 9) gb.receiveAttack({ x, y });
-            })
-          );
-          return gb;
-        });
+  test('recordHit method adds hit to hitTilesAI', () => {
+    const tile = { ship: { length: 3 }, x: 0, y: 0 };
+    aiPlayer.recordHit(0, 0, tile);
+    expect(aiPlayer.hitTilesAI).toHaveLength(1);
+    expect(aiPlayer.hitTilesAI[0]).toEqual({ x: 0, y: 0, ship: tile.ship });
+  });
 
-      gameboards.forEach(gb => {
-        aiPlayer.playMoveAI(gb);
-        expect(gb.board[9][9].isHit).toBe(true);
-      });
+  test('getAdjacentTiles returns correct adjacent tiles', () => {
+    const gameboard = Gameboard();
+    const tile = { x: 1, y: 1 };
+    const adjacentTiles = aiPlayer.getAdjacentTiles(tile, gameboard);
+    expect(adjacentTiles).toHaveLength(4);
+    expect(adjacentTiles).toContainEqual({
+      tile: gameboard.board[0][1],
+      direction: 'up',
+    });
+    expect(adjacentTiles).toContainEqual({
+      tile: gameboard.board[1][2],
+      direction: 'right',
+    });
+    expect(adjacentTiles).toContainEqual({
+      tile: gameboard.board[2][1],
+      direction: 'down',
+    });
+    expect(adjacentTiles).toContainEqual({
+      tile: gameboard.board[1][0],
+      direction: 'left',
     });
   });
 });

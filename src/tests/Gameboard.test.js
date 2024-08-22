@@ -44,7 +44,6 @@ describe('Gameboard', () => {
       });
     });
   });
-
   describe('placeShip', () => {
     const mockShip = length => ({ length, hit: jest.fn() });
 
@@ -70,6 +69,24 @@ describe('Gameboard', () => {
       }
     });
 
+    test('Allows placing ships adjacent to each other', () => {
+      const ship1 = mockShip(3);
+      const ship2 = mockShip(3);
+      gameboard.placeShip(ship1, { x: 0, y: 0, horizontally: true });
+      expect(() =>
+        gameboard.placeShip(ship2, { x: 0, y: 1, horizontally: true })
+      ).not.toThrow();
+    });
+
+    test('Throws error when trying to place overlapping ships', () => {
+      const ship1 = mockShip(3);
+      const ship2 = mockShip(3);
+      gameboard.placeShip(ship1, { x: 0, y: 0, horizontally: true });
+      expect(() =>
+        gameboard.placeShip(ship2, { x: 1, y: 0, vertically: true })
+      ).toThrow();
+    });
+
     test('Throws error when placement is invalid', () => {
       expect(() =>
         gameboard.placeShip(mockShip(4), {
@@ -83,15 +100,7 @@ describe('Gameboard', () => {
       ).toThrow();
       expect(() => gameboard.placeShip(mockShip(4), { x: 0, y: 0 })).toThrow();
     });
-
-    test('Throws error when trying to place ship on another ship', () => {
-      gameboard.placeShip(mockShip(3), { x: 0, y: 0, horizontally: true });
-      expect(() =>
-        gameboard.placeShip(mockShip(2), { x: 1, y: 0, vertically: true })
-      ).toThrow();
-    });
   });
-
   describe('receiveAttack', () => {
     test('Records hit on empty tile', () => {
       expect(gameboard.receiveAttack({ x: 0, y: 0 })).toBe(true);
@@ -139,7 +148,6 @@ describe('Gameboard', () => {
       expect(gameboard.isAllShipsSunk()).toBe(false);
     });
   });
-
   describe('placeShipsRandomly', () => {
     test('Places all ships on the board', () => {
       const ships = [Ship(5), Ship(4), Ship(3), Ship(3), Ship(2)];

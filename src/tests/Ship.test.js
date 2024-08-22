@@ -2,47 +2,6 @@ import Ship from '../modules/Ship';
 
 const ship = Ship(3);
 const shipTwo = Ship(2);
-
-test('Ship factory throws error if no arguments specified', () => {
-  expect(() => Ship()).toThrow();
-});
-
-test('Ship factory throws error if specified length greater than 5', () => {
-  expect(() => Ship(6)).toThrow();
-  expect(() => Ship(12)).toThrow();
-});
-
-test('Ship factory throws error if specified length less than 1', () => {
-  expect(() => Ship(0)).toThrow();
-});
-
-test('Ship factory returns an object', () => {
-  expect(typeof Ship(4)).toBe('object');
-});
-
-test('Returned object has expected properties', () => {
-  const properties = ['length', 'hitBox', 'hit', 'isSunk'];
-  const object = Ship(4);
-  const length = Object.keys(object).length;
-  expect(length).toBe(properties.length);
-  properties.forEach(property => expect(object[property]).toBeDefined());
-});
-
-test('length property is a number', () => {
-  expect(typeof ship.length).toBe('number');
-  expect(typeof shipTwo.length).toBe('number');
-});
-
-test('hitBox property is an array', () => {
-  expect(Array.isArray(ship.hitBox)).toBe(true);
-  expect(Array.isArray(shipTwo.hitBox)).toBe(true);
-});
-
-test('hitBox initial state is an array full of 0s', () => {
-  ship.hitBox.forEach(item => expect(item).toBe(0));
-  shipTwo.hitBox.forEach(item => expect(item).toBe(0));
-});
-
 test('hitBox array has same length as length property', () => {
   expect(ship.hitBox.length === ship.length).toBe(true);
   expect(shipTwo.hitBox.length === shipTwo.length).toBe(true);

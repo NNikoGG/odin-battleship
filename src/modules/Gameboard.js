@@ -55,15 +55,25 @@ const Gameboard = () => {
     return true;
   };
 
-  const placeShip = (ship, options = {}) => {
-    const { x, y, direction } = validateAndNormalizeOptions(ship, options);
+  const placeShip = (ship, { x, y, horizontally, vertically }) => {
+    if (!horizontally && !vertically) {
+      throw new Error('Ship must be placed either horizontally or vertically');
+    }
 
-    const placementStrategies = {
-      horizontal: () => placeShipInDirection(ship, x, y, i => [x + i, y]),
-      vertical: () => placeShipInDirection(ship, x, y, i => [x, y + i]),
-    };
+    const direction = horizontally ? 'horizontal' : 'vertical';
 
-    placementStrategies[direction]();
+    if (!canPlaceShip(ship, { x, y, direction })) {
+      throw new Error('Cannot place ship at specified coordinates');
+    }
+
+    for (let i = 0; i < ship.length; i++) {
+      const tileX = horizontally ? x + i : x;
+      const tileY = vertically ? y + i : y;
+      const tile = getTile(tileX, tileY);
+      tile.ship = ship;
+      tile.index = i;
+      tile.isTaken = true;
+    }
   };
 
   const validateAndNormalizeOptions = (ship, options) => {
@@ -172,6 +182,11 @@ const Gameboard = () => {
 
   const getMissedAttacks = () => [...missedAttacks];
 
+  const isHit = ({ x, y }) => {
+    const tile = getTile(x, y);
+    return tile && tile.isHit && tile.ship !== null;
+  };
+
   return {
     get board() {
       return board;
@@ -181,6 +196,7 @@ const Gameboard = () => {
     placeShipsRandomly,
     isAllShipsSunk,
     getMissedAttacks,
+    isHit,
   };
 };
 

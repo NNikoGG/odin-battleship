@@ -103,7 +103,11 @@ const Game = (() => {
       if (enemyGameboard.isAllShipsSunk()) {
         endGame('Player wins!');
       } else {
-        switchTurn();
+        if (!enemyGameboard.isHit({ x, y })) {
+          switchTurn();
+        } else {
+          DOM.displayMessage('Hit! You get another turn.');
+        }
       }
     } else {
       DOM.displayMessage('Invalid move. Try again.');
@@ -125,33 +129,45 @@ const Game = (() => {
   const playAITurn = () => {
     try {
       console.log('AI turn started');
-      const move = player2.playMoveAI(player1.gameboard);
-      console.log('AI move:', move);
+      let move;
+      let isHit;
 
-      if (move && typeof move.x === 'number' && typeof move.y === 'number') {
-        console.log(`AI attempting move at (${move.x}, ${move.y})`);
-        const success = player1.gameboard.receiveAttack(move);
+      do {
+        move = player2.playMoveAI(player1.gameboard);
+        console.log('AI move:', move);
 
-        if (success) {
-          const hitTile = player1.gameboard.board[move.y][move.x];
-          player2.recordHit(move.x, move.y, hitTile);
-          DOM.updateGameboard(player1.gameboard, 'player', move);
+        if (move && typeof move.x === 'number' && typeof move.y === 'number') {
+          console.log(`AI attempting move at (${move.x}, ${move.y})`);
+          const success = player1.gameboard.receiveAttack(move);
 
-          if (player1.gameboard.isAllShipsSunk()) {
-            endGame('Computer wins!');
+          if (success) {
+            const hitTile = player1.gameboard.board[move.y][move.x];
+            player2.recordHit(move.x, move.y, hitTile);
+            DOM.updateGameboard(player1.gameboard, 'player', move);
+
+            if (player1.gameboard.isAllShipsSunk()) {
+              endGame('Computer wins!');
+              return;
+            }
+
+            isHit = player1.gameboard.isHit(move);
+            if (isHit) {
+              DOM.displayMessage('AI hit a ship! It gets another turn.');
+            }
           } else {
-            switchTurn();
+            console.error('AI made an invalid move');
+            console.log('Player1 gameboard:', player1.gameboard);
+            endGame('Game ended due to AI error');
+            return;
           }
         } else {
-          console.error('AI made an invalid move');
+          console.error('Invalid move returned by AI:', move);
           console.log('Player1 gameboard:', player1.gameboard);
-          endGame('Game ended due to AI error');
+          throw new Error('Invalid move returned by AI');
         }
-      } else {
-        console.error('Invalid move returned by AI:', move);
-        console.log('Player1 gameboard:', player1.gameboard);
-        throw new Error('Invalid move returned by AI');
-      }
+      } while (isHit);
+
+      switchTurn();
     } catch (error) {
       console.error('AI move error:', error);
       console.log('Player1 gameboard:', player1.gameboard);
