@@ -3,21 +3,20 @@ const Player = (options = {}) => {
   const hitTilesAI = [];
   let gameboard;
 
-  const getAdjacentTiles = (tile, gameboard) => {
-    const { x, y } = tile;
+  const getAdjacentTiles = (tile, enemyGameboard) => {
     const directions = [
-      { dx: 0, dy: -1, name: 'up' },
-      { dx: 1, dy: 0, name: 'right' },
-      { dx: 0, dy: 1, name: 'down' },
-      { dx: -1, dy: 0, name: 'left' },
+      { dx: 0, dy: -1 },
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: -1, dy: 0 },
     ];
 
     return directions
-      .map(({ dx, dy, name }) => {
-        const newX = x + dx;
-        const newY = y + dy;
+      .map(({ dx, dy }) => {
+        const newX = tile.x + dx;
+        const newY = tile.y + dy;
         if (newX >= 0 && newX < 10 && newY >= 0 && newY < 10) {
-          return { tile: gameboard.board[newY][newX], direction: name };
+          return { x: newX, y: newY, tile: enemyGameboard.board[newY][newX] };
         }
         return null;
       })
@@ -52,40 +51,27 @@ const Player = (options = {}) => {
           const targetTile =
             adjacentUnhitTiles[
               Math.floor(Math.random() * adjacentUnhitTiles.length)
-            ].tile;
+            ];
           console.log('AI chose adjacent tile:', targetTile);
           return { x: targetTile.x, y: targetTile.y };
         }
       }
     }
 
-    // Ensure we always return a valid move with x and y coordinates
     const randomTile =
       unhitTiles[Math.floor(Math.random() * unhitTiles.length)];
     console.log('Random tile chosen:', randomTile);
 
     // Find the x and y coordinates of the random tile
-    const x = enemyGameboard.board.findIndex(row => row.includes(randomTile));
-    const y = enemyGameboard.board[x].indexOf(randomTile);
-
-    if (x === -1 || y === -1) {
-      console.error('Invalid random tile selected:', randomTile);
-      // Fallback to selecting first unhit tile with valid coordinates
-      for (let i = 0; i < enemyGameboard.board.length; i++) {
-        for (let j = 0; j < enemyGameboard.board[i].length; j++) {
-          if (!enemyGameboard.board[i][j].isHit) {
-            console.log('Fallback tile:', enemyGameboard.board[i][j]);
-            return { x: j, y: i };
-          }
-        }
+    for (let y = 0; y < enemyGameboard.board.length; y++) {
+      const x = enemyGameboard.board[y].indexOf(randomTile);
+      if (x !== -1) {
+        return { x, y };
       }
-      // If still no valid tile found, return null
-      console.error('No valid moves available');
-      return null;
     }
 
-    // Return an object with x and y properties
-    return { x, y };
+    console.error('No valid moves available');
+    return null;
   };
 
   const recordHit = (x, y, tile) => {
