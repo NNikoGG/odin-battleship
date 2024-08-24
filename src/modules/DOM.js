@@ -79,15 +79,30 @@ const DOM = (() => {
     });
   };
 
-  const displayShipPlacement = placeShipCallback => {
+  const displayShipPlacement = (
+    placeShipCallback,
+    resetCallback,
+    randomCallback,
+    startCallback
+  ) => {
     const playerBoard = document.getElementById('player-board');
-    const rotateButton = document.createElement('button');
-    rotateButton.textContent = 'Rotate Ship';
+    const controlsContainer = document.createElement('div');
+    controlsContainer.id = 'ship-placement-controls';
+
+    const rotateButton = createButton('Rotate Ship', 'rotate-ship');
+    const resetButton = createButton('Reset', 'reset-game');
+    const randomButton = createButton('Random', 'random-placement');
+    const startButton = createButton('Start Game', 'start-game');
+
     let isHorizontal = true;
 
     rotateButton.addEventListener('click', () => {
       isHorizontal = !isHorizontal;
     });
+
+    resetButton.addEventListener('click', resetCallback);
+    randomButton.addEventListener('click', randomCallback);
+    startButton.addEventListener('click', startCallback);
 
     playerBoard.addEventListener('click', e => {
       const cell = e.target.closest('.cell');
@@ -98,14 +113,28 @@ const DOM = (() => {
       }
     });
 
-    // Insert the rotate button before the player board
-    playerBoard.parentNode.insertBefore(rotateButton, playerBoard);
+    controlsContainer.append(
+      rotateButton,
+      resetButton,
+      randomButton,
+      startButton
+    );
+    playerBoard.parentNode.insertBefore(controlsContainer, playerBoard);
+  };
+
+  const createButton = (text, id) => {
+    const button = document.createElement('button');
+    button.textContent = text;
+    button.id = id;
+    return button;
   };
 
   const hideShipPlacement = () => {
-    const rotateButton = document.querySelector('button');
-    if (rotateButton) {
-      rotateButton.remove();
+    const controlsContainer = document.getElementById(
+      'ship-placement-controls'
+    );
+    if (controlsContainer) {
+      controlsContainer.style.display = 'none';
     }
   };
 

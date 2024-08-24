@@ -39,7 +39,9 @@ const Game = (() => {
             try {
               gameboard.placeShip(ship, { x, y, vertically: true });
               placed = true;
-            } catch (error) {}
+            } catch (error) {
+              // Ignore error and try next position
+            }
           }
         }
       }
@@ -64,19 +66,44 @@ const Game = (() => {
         DOM.renderGameboards(player1.gameboard, player2.gameboard);
         currentShipIndex++;
         if (currentShipIndex >= ships.length) {
-          startGame();
+          DOM.displayMessage('All ships placed. Click Start Game to begin!');
         }
       } catch (error) {
         DOM.displayMessage(error.message);
       }
     };
 
-    DOM.displayShipPlacement(placeShip);
-  };
+    const resetPlacement = () => {
+      currentShipIndex = 0;
+      player1.gameboard = Gameboard();
+      DOM.renderGameboards(player1.gameboard, player2.gameboard);
+      DOM.displayMessage('Ship placement reset. Place your ships!');
+    };
 
-  const startGame = () => {
-    DOM.hideShipPlacement();
-    setupEventListeners();
+    const randomPlacement = () => {
+      player1.gameboard = Gameboard();
+      player1.gameboard.placeShipsRandomly(ships);
+      DOM.renderGameboards(player1.gameboard, player2.gameboard);
+      currentShipIndex = ships.length; // Set to ships.length to indicate all ships are placed
+      DOM.displayMessage('Ships placed randomly. Click Start Game to begin!');
+    };
+
+    const startGame = () => {
+      if (currentShipIndex >= ships.length) {
+        DOM.hideShipPlacement();
+        setupEventListeners();
+        DOM.displayMessage('Game started. Attack the enemy board!');
+      } else {
+        DOM.displayMessage('Place all your ships before starting the game!');
+      }
+    };
+
+    DOM.displayShipPlacement(
+      placeShip,
+      resetPlacement,
+      randomPlacement,
+      startGame
+    );
   };
 
   const setupEventListeners = () => {
@@ -127,59 +154,68 @@ const Game = (() => {
   };
 
   const playAITurn = () => {
-    try {
-      console.log('AI turn started');
-      let move;
-      let isHit;
+    console.log('AI turn started');
+    console.log('Player 1 gameboard:', player1.gameboard);
+    let isHit = false;
+    let attempts = 0;
+    const maxAttempts = 100; // Prevent infinite loop
 
-      do {
-        move = player2.playMoveAI(player1.gameboard);
-        console.log('AI move:', move);
+    do {
+      attempts++;
+      if (attempts > maxAttempts) {
+        console.error('AI exceeded maximum attempts to make a valid move');
+        switchTurn();
+        return;
+      }
 
-        if (move && typeof move.x === 'number' && typeof move.y === 'number') {
-          console.log(`AI attempting move at (${move.x}, ${move.y})`);
-          const success = player1.gameboard.receiveAttack(move);
+      let move = player2.playMoveAI(player1.gameboard);
+      console.log('AI move:', move);
 
-          if (success) {
-            const hitTile = player1.gameboard.board[move.y][move.x];
-            player2.recordHit(move.x, move.y, hitTile);
-            DOM.updateGameboard(player1.gameboard, 'player', move);
+      if (!move) {
+        console.error('No valid moves available for AI');
+        switchTurn();
+        return;
+      }
 
-            if (player1.gameboard.isAllShipsSunk()) {
-              endGame('Computer wins!');
-              return;
-            }
+      console.log(`AI attempting move at (${move.x}, ${move.y})`);
 
-            isHit = player1.gameboard.isHit(move);
-            if (isHit) {
-              DOM.displayMessage('AI hit a ship! It gets another turn.');
-            }
-          } else {
-            console.error('AI made an invalid move');
-            console.log('Player1 gameboard:', player1.gameboard);
-            endGame('Game ended due to AI error');
-            return;
-          }
-        } else {
-          console.error('Invalid move returned by AI:', move);
-          console.log('Player1 gameboard:', player1.gameboard);
-          throw new Error('Invalid move returned by AI');
+      let success = player1.gameboard.receiveAttack(move);
+
+      if (success) {
+        DOM.updateGameboard(player1.gameboard, 'player', move);
+        isHit = player1.gameboard.isHit(move);
+
+        if (player1.gameboard.isAllShipsSunk()) {
+          endGame('AI wins!');
+          return;
         }
-      } while (isHit);
 
-      switchTurn();
-    } catch (error) {
-      console.error('AI move error:', error);
-      console.log('Player1 gameboard:', player1.gameboard);
-      endGame('Game ended due to AI error');
-    }
+        if (isHit) {
+          DOM.displayMessage('AI hit a ship! It gets another turn.');
+          player2.recordHit(
+            move.x,
+            move.y,
+            player1.gameboard.board[move.y][move.x]
+          );
+        } else {
+          DOM.displayMessage('AI missed!');
+          isHit = false;
+        }
+      } else {
+        console.error('AI made an invalid move');
+        isHit = false;
+      }
+    } while (isHit);
+
+    switchTurn();
   };
 
   const endGame = message => {
     DOM.displayEndGame(message);
+    // Add any additional end game logic here
   };
 
-  return { init };
+  return { init, playTurn, playAITurn }; // Export playTurn and playAITurn for testing
 })();
 
 export default Game;

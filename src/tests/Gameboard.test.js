@@ -69,13 +69,13 @@ describe('Gameboard', () => {
       }
     });
 
-    test('Allows placing ships adjacent to each other', () => {
+    test('Prevents placing ships adjacent to each other', () => {
       const ship1 = mockShip(3);
       const ship2 = mockShip(3);
       gameboard.placeShip(ship1, { x: 0, y: 0, horizontally: true });
       expect(() =>
         gameboard.placeShip(ship2, { x: 0, y: 1, horizontally: true })
-      ).not.toThrow();
+      ).toThrow();
     });
 
     test('Throws error when trying to place overlapping ships', () => {

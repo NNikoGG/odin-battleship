@@ -42,20 +42,9 @@ const Gameboard = () => {
     return true;
   };
 
-  const isTileTaken = (x, y) => getTile(x, y)?.isTaken || false;
+  const placeShip = (ship, options) => {
+    const { x, y, horizontally, vertically } = options;
 
-  const canPlaceShip = (ship, { x, y, direction }) => {
-    for (let i = 0; i < ship.length; i++) {
-      const tileX = direction === 'horizontal' ? x + i : x;
-      const tileY = direction === 'vertical' ? y + i : y;
-      if (!isWithinBounds(tileX, tileY) || isTileTaken(tileX, tileY)) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const placeShip = (ship, { x, y, horizontally, vertically }) => {
     if (!horizontally && !vertically) {
       throw new Error('Ship must be placed either horizontally or vertically');
     }
@@ -74,56 +63,14 @@ const Gameboard = () => {
       tile.index = i;
       tile.isTaken = true;
     }
-  };
 
-  const validateAndNormalizeOptions = (ship, options) => {
-    const { x, y, horizontally, vertically } = options;
-
-    if (x === undefined || y === undefined) {
-      throw new Error('Specify both x and y coordinates');
-    }
-
-    if (
-      (horizontally === undefined && vertically === undefined) ||
-      (horizontally && vertically)
-    ) {
-      throw new Error('Specify one ship placement direction');
-    }
-
-    const direction = horizontally ? 'horizontal' : 'vertical';
-    const endX = direction === 'horizontal' ? x + ship.length - 1 : x;
-    const endY = direction === 'vertical' ? y + ship.length - 1 : y;
-
-    if (!isWithinBounds(x, y) || !isWithinBounds(endX, endY)) {
-      throw new Error('Ship placement out of bounds');
-    }
-
-    if (!canPlaceShip(ship, { x, y, direction })) {
-      throw new Error('Cannot place ship on this square');
-    }
-
-    return { x, y, direction };
-  };
-
-  const placeShipInDirection = (ship, startX, startY, getCoordinates) => {
-    for (let i = 0; i < ship.length; i++) {
-      const [x, y] = getCoordinates(i);
-      const tile = getTile(x, y);
-      if (tile) {
-        tile.ship = ship;
-        tile.index = i;
-        tile.isTaken = true;
-      }
-    }
-    markAdjacentTiles(ship, startX, startY, getCoordinates);
-  };
-
-  const markAdjacentTiles = (ship, startX, startY, getCoordinates) => {
+    // Mark adjacent tiles as taken
     for (let i = -1; i <= ship.length; i++) {
-      const [x, y] = getCoordinates(i);
+      const checkX = horizontally ? x + i : x;
+      const checkY = vertically ? y + i : y;
       [-1, 0, 1].forEach(dx =>
         [-1, 0, 1].forEach(dy => {
-          const tile = getTile(x + dx, y + dy);
+          const tile = getTile(checkX + dx, checkY + dy);
           if (tile) tile.isTaken = true;
         })
       );
@@ -163,11 +110,21 @@ const Gameboard = () => {
     }
   };
 
-  const findLegalMoves = (ship, direction) =>
-    board.flat().filter(tile => {
-      const { x, y } = tile;
-      return canPlaceShip(ship, { x, y, direction });
-    });
+  const canPlaceShip = (ship, { x, y, direction }) => {
+    for (let i = 0; i < ship.length; i++) {
+      const tileX = direction === 'horizontal' ? x + i : x;
+      const tileY = direction === 'vertical' ? y + i : y;
+      if (!isWithinBounds(tileX, tileY) || isTileTaken(tileX, tileY)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const isTileTaken = (x, y) => {
+    const tile = getTile(x, y);
+    return tile ? tile.isTaken : false;
+  };
 
   const isAllShipsSunk = () =>
     board.flat().every(tile => !tile.ship || tile.ship.isSunk());
@@ -187,6 +144,10 @@ const Gameboard = () => {
     return tile && tile.isHit && tile.ship !== null;
   };
 
+  const getAvailableMoves = () => {
+    return board.flat().filter(tile => !tile.isHit);
+  };
+
   return {
     get board() {
       return board;
@@ -197,6 +158,7 @@ const Gameboard = () => {
     isAllShipsSunk,
     getMissedAttacks,
     isHit,
+    getAvailableMoves,
   };
 };
 

@@ -25,62 +25,67 @@ const Player = (options = {}) => {
   };
 
   const playMoveAI = enemyGameboard => {
-    if (
-      !enemyGameboard ||
-      typeof enemyGameboard !== 'object' ||
-      Array.isArray(enemyGameboard)
-    ) {
-      throw new Error('Invalid gameboard');
-    }
+    console.log('AI is attempting to make a move');
+    console.log('Enemy gameboard:', enemyGameboard);
 
-    // Get all unhit tiles
     const unhitTiles = enemyGameboard.board.flat().filter(tile => !tile.isHit);
-
-    if (unhitTiles.length === 0) {
-      throw new Error('No available moves');
-    }
-
     console.log('Unhit tiles:', unhitTiles);
 
-    // First, try to hit adjacent to previously hit ships
+    if (unhitTiles.length === 0) {
+      console.log('No available moves');
+      return null;
+    }
+
     const hitShipTiles = hitTilesAI.filter(
       tile => tile.ship && !tile.ship.isSunk()
     );
-    console.log('Hit ship tiles:', hitShipTiles);
 
-    for (const tile of hitShipTiles) {
-      const adjacentUnhitTiles = getAdjacentTiles(tile, enemyGameboard).filter(
-        ({ tile }) => !tile.isHit
-      );
+    if (hitShipTiles.length > 0) {
+      console.log('AI found hit ship tiles:', hitShipTiles);
+      for (const tile of hitShipTiles) {
+        const adjacentUnhitTiles = getAdjacentTiles(
+          tile,
+          enemyGameboard
+        ).filter(({ tile }) => !tile.isHit);
 
-      console.log('Adjacent unhit tiles:', adjacentUnhitTiles);
-
-      if (adjacentUnhitTiles.length > 0) {
-        const targetTile =
-          adjacentUnhitTiles[
-            Math.floor(Math.random() * adjacentUnhitTiles.length)
-          ].tile;
-        console.log('Targeting adjacent tile:', targetTile);
-        return { x: targetTile.x, y: targetTile.y };
-      }
-    }
-
-    // If no adjacent hits, make a random move
-    const randomTile =
-      unhitTiles[Math.floor(Math.random() * unhitTiles.length)];
-    console.log('Making random move:', randomTile);
-
-    // Find the coordinates of the random tile
-    for (let y = 0; y < enemyGameboard.board.length; y++) {
-      for (let x = 0; x < enemyGameboard.board[y].length; x++) {
-        if (enemyGameboard.board[y][x] === randomTile) {
-          console.log(`Found coordinates for random move: x=${x}, y=${y}`);
-          return { x, y };
+        if (adjacentUnhitTiles.length > 0) {
+          const targetTile =
+            adjacentUnhitTiles[
+              Math.floor(Math.random() * adjacentUnhitTiles.length)
+            ].tile;
+          console.log('AI chose adjacent tile:', targetTile);
+          return { x: targetTile.x, y: targetTile.y };
         }
       }
     }
 
-    throw new Error('Unable to find coordinates for the selected tile');
+    // Ensure we always return a valid move with x and y coordinates
+    const randomTile =
+      unhitTiles[Math.floor(Math.random() * unhitTiles.length)];
+    console.log('Random tile chosen:', randomTile);
+
+    // Find the x and y coordinates of the random tile
+    const x = enemyGameboard.board.findIndex(row => row.includes(randomTile));
+    const y = enemyGameboard.board[x].indexOf(randomTile);
+
+    if (x === -1 || y === -1) {
+      console.error('Invalid random tile selected:', randomTile);
+      // Fallback to selecting first unhit tile with valid coordinates
+      for (let i = 0; i < enemyGameboard.board.length; i++) {
+        for (let j = 0; j < enemyGameboard.board[i].length; j++) {
+          if (!enemyGameboard.board[i][j].isHit) {
+            console.log('Fallback tile:', enemyGameboard.board[i][j]);
+            return { x: j, y: i };
+          }
+        }
+      }
+      // If still no valid tile found, return null
+      console.error('No valid moves available');
+      return null;
+    }
+
+    // Return an object with x and y properties
+    return { x, y };
   };
 
   const recordHit = (x, y, tile) => {
