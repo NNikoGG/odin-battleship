@@ -130,11 +130,11 @@ const DOM = (() => {
   };
 
   const hideShipPlacement = () => {
-    const controlsContainer = document.getElementById(
+    const shipPlacementControls = document.getElementById(
       'ship-placement-controls'
     );
-    if (controlsContainer) {
-      controlsContainer.style.display = 'none';
+    if (shipPlacementControls) {
+      shipPlacementControls.style.display = 'none';
     }
   };
 

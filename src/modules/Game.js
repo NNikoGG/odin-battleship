@@ -91,6 +91,8 @@ const Game = (() => {
     const startGame = () => {
       if (currentShipIndex >= ships.length) {
         DOM.hideShipPlacement();
+        // Show the enemy board
+        document.querySelector('.enemy-board').style.display = 'block';
         setupEventListeners();
         DOM.displayMessage('Game started. Attack the enemy board!');
       } else {
