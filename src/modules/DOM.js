@@ -55,7 +55,6 @@ const DOM = (() => {
 
   const displayEndGame = message => {
     messageElement.textContent = message;
-    messageElement.style.display = 'block';
   };
 
   const displayMessage = message => {
@@ -86,6 +85,12 @@ const DOM = (() => {
     startCallback
   ) => {
     const playerBoard = document.getElementById('player-board');
+
+    // Check if controls already exist
+    if (document.getElementById('ship-placement-controls')) {
+      return; // Exit if controls are already present
+    }
+
     const controlsContainer = document.createElement('div');
     controlsContainer.id = 'ship-placement-controls';
 

@@ -216,7 +216,15 @@ const Game = (() => {
 
   const endGame = message => {
     DOM.displayEndGame(message);
-    // Add any additional end game logic here
+    document.getElementById('play-again').style.display = 'block'; // Show the button
+    document.getElementById('message').textContent = message; // Display the winner message
+    document.getElementById('play-again').onclick = () => {
+      resetGame();
+    };
+  };
+
+  const resetGame = () => {
+    location.reload(); // Reload the page
   };
 
   return { init, playTurn, playAITurn }; // Export playTurn and playAITurn for testing
