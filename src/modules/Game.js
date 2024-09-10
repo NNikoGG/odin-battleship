@@ -160,8 +160,7 @@ const Game = (() => {
     let attempts = 0;
     const maxAttempts = 100; // Prevent infinite loop
 
-    do {
-      attempts++;
+    const makeAIMove = () => {
       if (attempts > maxAttempts) {
         console.error('AI exceeded maximum attempts to make a valid move');
         switchTurn();
@@ -197,17 +196,20 @@ const Game = (() => {
             move.y,
             player1.gameboard.board[move.y][move.x]
           );
+
+          // Add a timeout before the next AI move
+          setTimeout(makeAIMove, 1000); // 1 second delay
         } else {
           DOM.displayMessage('AI missed!');
-          isHit = false;
+          switchTurn();
         }
       } else {
         console.error('AI made an invalid move');
-        isHit = false;
+        switchTurn();
       }
-    } while (isHit);
+    };
 
-    switchTurn();
+    makeAIMove(); // Start the AI turn
   };
 
   const endGame = message => {
