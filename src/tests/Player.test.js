@@ -71,21 +71,26 @@ describe('Player', () => {
     const tile = { x: 1, y: 1 };
     const adjacentTiles = aiPlayer.getAdjacentTiles(tile, gameboard);
     expect(adjacentTiles).toHaveLength(4);
+
     expect(adjacentTiles).toContainEqual({
       tile: gameboard.board[0][1],
-      direction: 'up',
+      x: 1,
+      y: 0,
     });
     expect(adjacentTiles).toContainEqual({
       tile: gameboard.board[1][2],
-      direction: 'right',
+      x: 2,
+      y: 1,
     });
     expect(adjacentTiles).toContainEqual({
       tile: gameboard.board[2][1],
-      direction: 'down',
+      x: 1,
+      y: 2,
     });
     expect(adjacentTiles).toContainEqual({
       tile: gameboard.board[1][0],
-      direction: 'left',
+      x: 0,
+      y: 1,
     });
   });
 });

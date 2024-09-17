@@ -19,7 +19,6 @@ const Game = (() => {
     try {
       player2.gameboard.placeShipsRandomly(ships);
     } catch (error) {
-      console.error('Failed to place ships randomly:', error);
       manualPlaceShips(player2.gameboard, ships);
     }
 
@@ -118,12 +117,10 @@ const Game = (() => {
 
   const playTurn = (x, y) => {
     if (currentPlayer !== player1) {
-      console.log("Not player's turn");
       return;
     }
 
     const enemyGameboard = player2.gameboard;
-    console.log(`Player attempting move at (${x}, ${y})`);
     const success = enemyGameboard.receiveAttack({ x, y });
 
     if (success) {
@@ -145,10 +142,6 @@ const Game = (() => {
 
   const switchTurn = () => {
     currentPlayer = currentPlayer === player1 ? player2 : player1;
-    console.log(
-      'Switched turn to:',
-      currentPlayer === player1 ? 'Player' : 'AI'
-    );
 
     if (currentPlayer === player2) {
       setTimeout(playAITurn, 1000);
@@ -156,29 +149,22 @@ const Game = (() => {
   };
 
   const playAITurn = () => {
-    console.log('AI turn started');
-    console.log('Player 1 gameboard:', player1.gameboard);
     let isHit = false;
     let attempts = 0;
     const maxAttempts = 100; // Prevent infinite loop
 
     const makeAIMove = () => {
       if (attempts > maxAttempts) {
-        console.error('AI exceeded maximum attempts to make a valid move');
         switchTurn();
         return;
       }
 
       let move = player2.playMoveAI(player1.gameboard);
-      console.log('AI move:', move);
 
       if (!move) {
-        console.error('No valid moves available for AI');
         switchTurn();
         return;
       }
-
-      console.log(`AI attempting move at (${move.x}, ${move.y})`);
 
       let success = player1.gameboard.receiveAttack(move);
 
@@ -206,7 +192,6 @@ const Game = (() => {
           switchTurn();
         }
       } else {
-        console.error('AI made an invalid move');
         switchTurn();
       }
     };

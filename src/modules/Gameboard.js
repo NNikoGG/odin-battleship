@@ -19,24 +19,19 @@ const Gameboard = () => {
 
   const receiveAttack = ({ x, y }) => {
     const tile = getTile(x, y);
-    console.log(`Attempting attack at (${x}, ${y}):`, tile); // Debug log
 
     if (!tile) {
-      console.log('Invalid coordinates');
       return false;
     }
 
     if (tile.isHit) {
-      console.log('Already hit');
       return false;
     }
 
     tile.isHit = true;
     if (tile.ship) {
-      console.log('Hit ship');
       tile.ship.hit(tile.index);
     } else {
-      console.log('Missed');
       missedAttacks.push({ x, y });
     }
     return true;

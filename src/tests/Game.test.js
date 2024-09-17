@@ -4,14 +4,32 @@ import Gameboard from '../modules/Gameboard';
 import Ship from '../modules/Ship';
 import DOM from '../modules/DOM';
 
-jest.mock('../modules/Player');
+jest.mock('../modules/Player', () => {
+  return jest.fn().mockImplementation(() => {
+    return {
+      gameboard: {
+        receiveAttack: jest.fn(),
+        isHit: jest.fn(),
+        placeShip: jest.fn(),
+      },
+      isAI: false,
+    };
+  });
+});
+
 jest.mock('../modules/Gameboard');
 jest.mock('../modules/Ship');
 jest.mock('../modules/DOM');
 
 describe('Game', () => {
+  let player1, player2;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    player1 = Player(); // Initialize player1
+    player2 = Player({ isAI: true }); // Initialize player2
+    player1.gameboard = Gameboard(); // Set gameboard for player1
+    player2.gameboard = Gameboard(); // Set gameboard for player2
   });
 
   test('init function initializes the game correctly', () => {
@@ -48,7 +66,7 @@ describe('Game', () => {
   test('playTurn function handles player turn correctly', () => {
     Game.init();
     const mockReceiveAttack = jest.fn().mockReturnValue(true);
-    Player.mock.instances[1].gameboard.receiveAttack = mockReceiveAttack;
+    player1.gameboard.receiveAttack = mockReceiveAttack;
 
     Game.playTurn(0, 0);
 
@@ -60,8 +78,8 @@ describe('Game', () => {
     Game.init();
     const mockReceiveAttack = jest.fn().mockReturnValue(true);
     const mockIsHit = jest.fn().mockReturnValue(true);
-    Player.mock.instances[1].gameboard.receiveAttack = mockReceiveAttack;
-    Player.mock.instances[1].gameboard.isHit = mockIsHit;
+    player1.gameboard.receiveAttack = mockReceiveAttack;
+    player1.gameboard.isHit = mockIsHit;
 
     Game.playTurn(0, 0);
 
@@ -84,9 +102,9 @@ describe('Game', () => {
       .fn()
       .mockReturnValueOnce(true)
       .mockReturnValueOnce(false);
-    Player.mock.instances[1].playMoveAI = mockPlayMoveAI;
-    Player.mock.instances[0].gameboard.receiveAttack = mockReceiveAttack;
-    Player.mock.instances[0].gameboard.isHit = mockIsHit;
+    player2.playMoveAI = mockPlayMoveAI;
+    player1.gameboard.receiveAttack = mockReceiveAttack;
+    player1.gameboard.isHit = mockIsHit;
 
     Game.playAITurn();
 
@@ -102,9 +120,9 @@ describe('Game', () => {
   test('playAITurn function handles AI turn correctly', () => {
     Game.init();
     const mockPlayMoveAI = jest.fn().mockReturnValue({ x: 1, y: 1 });
-    Player.mock.instances[1].playMoveAI = mockPlayMoveAI;
+    player2.playMoveAI = mockPlayMoveAI;
     const mockReceiveAttack = jest.fn().mockReturnValue(true);
-    Player.mock.instances[0].gameboard.receiveAttack = mockReceiveAttack;
+    player1.gameboard.receiveAttack = mockReceiveAttack;
 
     Game.playAITurn();
 

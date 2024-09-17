@@ -2,6 +2,7 @@ import Ship from '../modules/Ship';
 
 const ship = Ship(3);
 const shipTwo = Ship(2);
+
 test('hitBox array has same length as length property', () => {
   expect(ship.hitBox.length === ship.length).toBe(true);
   expect(shipTwo.hitBox.length === shipTwo.length).toBe(true);

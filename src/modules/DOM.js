@@ -47,7 +47,6 @@ const DOM = (() => {
       if (cell) {
         const x = parseInt(cell.dataset.x);
         const y = parseInt(cell.dataset.y);
-        console.log(`Cell clicked: (${x}, ${y})`);
         callback(x, y);
       }
     });
