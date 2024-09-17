@@ -218,6 +218,7 @@ const Game = (() => {
     DOM.displayEndGame(message);
     document.getElementById('play-again').style.display = 'block'; // Show the button
     document.getElementById('message').textContent = message; // Display the winner message
+    document.getElementById('message').style.display = 'block'; // Ensure the message is visible
     document.getElementById('play-again').onclick = () => {
       resetGame();
     };
