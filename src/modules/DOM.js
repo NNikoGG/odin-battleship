@@ -55,6 +55,7 @@ const DOM = (() => {
 
   const displayEndGame = message => {
     messageElement.textContent = message;
+    messageElement.style.display = 'block';
   };
 
   const displayMessage = message => {
